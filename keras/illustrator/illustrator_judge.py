@@ -8,7 +8,7 @@ import glob
 imsize = (32, 32)
 
 keras_param = "./illustrator_cnn.h5"
-files = glob.glob("./img/*")
+files = glob.glob("./illust_img/*")
 
 def load_image(path):
     img = Image.open(path)
@@ -27,10 +27,14 @@ if __name__ == "__main__":
         img = load_image(file)
         prd = model.predict(np.array([img]))
         print(prd) # 精度の表示
-        # prelabel = np.argmax(prd, axis=1)
-        if prd[0, 0] > 0.6:
-            print(">>> ぽんかん8")
-        elif prd[0, 1] > 0.6:
+        prelabel = np.argmax(prd, axis=1)
+        if prelabel == 0:
+            print(">>> ぽんかん⑧")
+        elif prelabel == 1:
             print(">>> ixy")
-        else:
-            print("その他")
+        elif prelabel == 2:
+            print(">>> so-bin")
+        elif prelabel == 3:
+            print(">>> 得能")
+        elif prelabel == 4:
+            print(">>> anmi")

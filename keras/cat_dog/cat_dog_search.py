@@ -2,7 +2,7 @@ import keras
 import keras.backend as K
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
-from keras.layers import Activation, Dropout, Flatten, Dense
+from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras.utils import np_utils
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -20,16 +20,14 @@ IMAGE_SIZE = 32
 
 def load_data():
     X_train, X_test, y_train, y_test = np.load("./dataset.npy", allow_pickle=True)
-    X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.175)
-    X_train = X_train.astype("float") / 256
-    X_valid = X_valid.astype("float") / 256
-    X_test = X_test.astype("float") / 256
-
+    # 入力データの各画素値を0-1の範囲で正規化(学習コストを下げるため)
+    X_train = X_train.astype("float") / 255
+    X_test = X_test.astype("float") / 255
+    # to_categorical()にてラベルをone hot vector化
     y_train = np_utils.to_categorical(y_train, NUM_CLASSES)
-    y_valid = np_utils.to_categorical(y_valid, NUM_CLASSES)
     y_test = np_utils.to_categorical(y_test, NUM_CLASSES)
 
-    return X_train, X_valid, X_test, y_train, y_valid, y_test
+    return X_train, y_train, X_test, y_test
 
 
 """
@@ -47,6 +45,7 @@ def create_model(num_layer, activation, mid_units, num_filters, dropout_rate):
     """
 
     model = Sequential()
+
     model.add(Conv2D(num_filters[0], (3, 3), padding='same', input_shape=(IMAGE_SIZE, IMAGE_SIZE, 3)))
     model.add(Activation(activation))
 
@@ -55,8 +54,8 @@ def create_model(num_layer, activation, mid_units, num_filters, dropout_rate):
         model.add(Activation(activation))
 
     model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(BatchNormalization())
     model.add(Dropout(dropout_rate))
-
     model.add(Flatten())
 
     model.add(Dense(mid_units))
@@ -77,7 +76,7 @@ def objective(trial):
     K.clear_session()
 
     # データ読み込み
-    X_train, X_valid, X_test, y_train, y_valid, y_test = load_data()
+    X_train, y_train, X_test, y_test = load_data()
 
     # 最適化するパラメータの設定
     # 畳込み層の数
@@ -112,10 +111,7 @@ def objective(trial):
     model.compile(loss='categorical_crossentropy',
                   optimizer=opt, metrics=['accuracy'])
 
-    history = model.fit(X_train, y_train,
-                        batch_size=64,
-                        epochs=10,
-                        validation_data=(X_valid, y_valid))
+    history = model.fit(X_train, y_train, batch_size=128, epochs=10, validation_data=(X_test, y_test))
 
     return -np.amax(history.history['val_accuracy'])
 

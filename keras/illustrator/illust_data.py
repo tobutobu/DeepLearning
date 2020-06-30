@@ -1,16 +1,15 @@
 import matplotlib.pyplot as plt
-import cv2
 from PIL import Image
-import os, glob
+import glob
 import numpy as np
 from PIL import ImageFile
 import random, math
 # IOError: image file is truncated (0 bytes not processed)回避のため
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-CATEGORIES = ["ponkan⑧", "ixy", "so-bin", "tokunou", "anmi"]
+CATEGORIES = ["ponkan", "ixy", "makihituzi", "tokunou", "anmi"]
 NUM_CLASSES = len(CATEGORIES)
-IMAGE_SIZE = 32
+IMAGE_SIZE = 64
 TRAIN_RATE=0.8
 
 X_train = []
@@ -56,7 +55,7 @@ allfiles = []
 
 #カテゴリ配列の各値と、それに対応するindexを認識し、全データをallfilesにまとめる
 for index, classlabel in enumerate(CATEGORIES):
-    photos_dir = "./" + classlabel
+    photos_dir = "./face_img/" + classlabel
     files = glob.glob(photos_dir + "/*.jpg")
     for f in files:
         allfiles.append((index, f))
